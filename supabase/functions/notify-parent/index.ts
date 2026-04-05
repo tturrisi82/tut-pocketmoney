@@ -2,12 +2,11 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const PARENT_PHONE = Deno.env.get("PARENT_PHONE")!;
-const CALLMEBOT_API_KEY = Deno.env.get("CALLMEBOT_API_KEY")!;
+const TELEGRAM_BOT_TOKEN = Deno.env.get("TELEGRAM_BOT_TOKEN")!;
+const TELEGRAM_CHAT_ID = Deno.env.get("TELEGRAM_CHAT_ID")!;
 const APP_URL = Deno.env.get("APP_URL") ?? "";
 
 Deno.serve(async (req) => {
-  // Validate request method
   if (req.method !== "POST") {
     return new Response("Method not allowed", { status: 405 });
   }
@@ -21,7 +20,6 @@ Deno.serve(async (req) => {
 
   const instance = payload.record;
   if (!instance || instance["status"] !== "pending_approval") {
-    // Ignore non-relevant webhook events
     return new Response("OK", { status: 200 });
   }
 
@@ -29,7 +27,7 @@ Deno.serve(async (req) => {
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-  // Idempotency check: skip if we already sent a notification for this instance
+  // Idempotency check
   const { data: existing } = await supabase
     .from("notification_log")
     .select("id")
@@ -51,23 +49,27 @@ Deno.serve(async (req) => {
   const choreTitle = choreData?.title ?? "a chore";
   const dueDate = instance["due_date"] as string;
 
-  // Build WhatsApp message
-  const message = encodeURIComponent(
-    `Luca marked "${choreTitle}" as done on ${dueDate}. Open the app to review: ${APP_URL}/parent/review`
-  );
-
-  // Send via Callmebot
-  const callmebotUrl =
-    `https://api.callmebot.com/whatsapp.php?phone=${encodeURIComponent(PARENT_PHONE)}&text=${message}&apikey=${CALLMEBOT_API_KEY}`;
+  // Send via Telegram
+  const message = `Luca marked "${choreTitle}" as done on ${dueDate}. Open the app to review: ${APP_URL}/parent/review`;
 
   let success = true;
   let errorMessage: string | null = null;
 
   try {
-    const response = await fetch(callmebotUrl);
+    const response = await fetch(
+      `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: TELEGRAM_CHAT_ID,
+          text: message,
+        }),
+      }
+    );
     if (!response.ok) {
       success = false;
-      errorMessage = `Callmebot returned ${response.status}: ${await response.text()}`;
+      errorMessage = `Telegram returned ${response.status}: ${await response.text()}`;
     }
   } catch (err) {
     success = false;
@@ -78,7 +80,7 @@ Deno.serve(async (req) => {
   await supabase.from("notification_log").insert({
     chore_instance_id: instanceId,
     notification_type: "completion_pending",
-    phone_to: PARENT_PHONE,
+    phone_to: `telegram:${TELEGRAM_CHAT_ID}`,
     success,
     error_message: errorMessage,
   });

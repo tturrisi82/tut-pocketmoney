@@ -1,10 +1,11 @@
 import { NavLink, Outlet } from 'react-router-dom'
-import { CalendarDays, Clock3, History, LogOut } from 'lucide-react'
+import { CalendarDays, Clock3, History, LogOut, BarChart2 } from 'lucide-react'
 import { signOut } from '../../hooks/useAuth'
 
 const navItems = [
   { to: '/child/today', icon: <Clock3 size={22} />, label: 'Today' },
   { to: '/child/week', icon: <CalendarDays size={22} />, label: 'This Week' },
+  { to: '/child/progress', icon: <BarChart2 size={22} />, label: 'Progress' },
   { to: '/child/history', icon: <History size={22} />, label: 'History' },
 ]
 

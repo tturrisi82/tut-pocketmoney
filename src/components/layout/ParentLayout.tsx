@@ -1,11 +1,12 @@
 import { NavLink, Outlet } from 'react-router-dom'
-import { ListChecks, ClipboardCheck, History, LogOut, BellDot } from 'lucide-react'
+import { ListChecks, ClipboardCheck, History, LogOut, BellDot, BarChart2 } from 'lucide-react'
 import { signOut } from '../../hooks/useAuth'
 import { usePendingCount } from '../../hooks/usePendingApprovals'
 
 const navItems = [
   { to: '/parent/chores', icon: <ListChecks size={18} />, label: 'Manage Chores' },
   { to: '/parent/review', icon: <ClipboardCheck size={18} />, label: 'Review', showBadge: true },
+  { to: '/parent/progress', icon: <BarChart2 size={18} />, label: 'Progress' },
   { to: '/parent/history', icon: <History size={18} />, label: 'History' },
 ]
 

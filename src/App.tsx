@@ -11,6 +11,7 @@ import { ChildHistoryPage } from './pages/child/ChildHistoryPage'
 import { ParentChoresPage } from './pages/parent/ParentChoresPage'
 import { ParentReviewPage } from './pages/parent/ParentReviewPage'
 import { ParentHistoryPage } from './pages/parent/ParentHistoryPage'
+import { WeekProgressPage } from './pages/WeekProgressPage'
 
 function RootRedirect() {
   const { user, profile, loading } = useAuth()
@@ -57,6 +58,7 @@ export default function App() {
         <Route index element={<Navigate to="today" replace />} />
         <Route path="today" element={<ChildTodayPage />} />
         <Route path="week" element={<ChildWeekPage />} />
+        <Route path="progress" element={<WeekProgressPage />} />
         <Route path="history" element={<ChildHistoryPage />} />
       </Route>
 
@@ -78,6 +80,7 @@ export default function App() {
           path="review"
           element={profile?.id ? <ParentReviewPage reviewerId={profile.id} /> : <LoadingSpinner />}
         />
+        <Route path="progress" element={<WeekProgressPage />} />
         <Route path="history" element={<ParentHistoryPage />} />
       </Route>
 
