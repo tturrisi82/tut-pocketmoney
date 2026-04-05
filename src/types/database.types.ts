@@ -123,6 +123,24 @@ export type Database = {
           }
         ]
       }
+      app_settings: {
+        Row: {
+          id: number
+          weekly_target: number
+          updated_at: string
+        }
+        Insert: {
+          id?: number
+          weekly_target?: number
+          updated_at?: string
+        }
+        Update: {
+          id?: number
+          weekly_target?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       notification_log: {
         Row: {
           id: string

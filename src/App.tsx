@@ -11,6 +11,7 @@ import { ChildHistoryPage } from './pages/child/ChildHistoryPage'
 import { ParentChoresPage } from './pages/parent/ParentChoresPage'
 import { ParentReviewPage } from './pages/parent/ParentReviewPage'
 import { ParentHistoryPage } from './pages/parent/ParentHistoryPage'
+import { ParentSettingsPage } from './pages/parent/ParentSettingsPage'
 import { WeekProgressPage } from './pages/WeekProgressPage'
 
 function RootRedirect() {
@@ -82,6 +83,7 @@ export default function App() {
         />
         <Route path="progress" element={<WeekProgressPage />} />
         <Route path="history" element={<ParentHistoryPage />} />
+        <Route path="settings" element={<ParentSettingsPage />} />
       </Route>
 
       {/* Catch-all */}

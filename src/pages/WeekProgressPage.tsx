@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { CheckCircle2, XCircle, Clock, Minus } from 'lucide-react'
 import { useWeekProgress, type DayProgress } from '../hooks/useWeekProgress'
+import { useSettings } from '../hooks/useSettings'
 import { getWeekRange, formatDayLabel, getTodayString, addDays, subDays } from '../lib/dates'
 import { DateNavigator } from '../components/ui/DateNavigator'
 import { LoadingSpinner } from '../components/ui/LoadingSpinner'
@@ -14,6 +15,8 @@ export function WeekProgressPage() {
   const isCurrentWeek = today >= start && today <= end
 
   const { data, isLoading } = useWeekProgress(days)
+  const { data: settings } = useSettings()
+  const weeklyTarget = settings?.weekly_target ?? 10
 
   return (
     <div className="px-4 pt-5 pb-4 max-w-lg mx-auto space-y-5">
@@ -33,7 +36,7 @@ export function WeekProgressPage() {
       {data && (
         <>
           {/* Overall score card */}
-          <OverallScore data={data} />
+          <OverallScore data={data} weeklyTarget={weeklyTarget} />
 
           {/* Day-by-day breakdown */}
           <div className="space-y-2">
@@ -47,13 +50,11 @@ export function WeekProgressPage() {
   )
 }
 
-const WEEKLY_TARGET = 10 // £10
-
-function OverallScore({ data }: { data: NonNullable<ReturnType<typeof useWeekProgress>['data']> }) {
+function OverallScore({ data, weeklyTarget }: { data: NonNullable<ReturnType<typeof useWeekProgress>['data']>; weeklyTarget: number }) {
   const { totalApproved, totalChores, completedDays, scorableDays } = data
   const pct = totalChores > 0 ? totalApproved / totalChores : 0
   const pctDisplay = Math.round(pct * 100)
-  const earned = (pct * WEEKLY_TARGET).toFixed(2)
+  const earned = (pct * weeklyTarget).toFixed(2)
   const allDone = scorableDays > 0 && completedDays === scorableDays
 
   return (
@@ -72,7 +73,7 @@ function OverallScore({ data }: { data: NonNullable<ReturnType<typeof useWeekPro
           <p className={`text-3xl font-bold mt-1 ${allDone ? 'text-emerald-600' : 'text-indigo-600'}`}>
             £{earned}
           </p>
-          <p className="text-sm text-gray-400 mt-1">of £{WEEKLY_TARGET.toFixed(2)}</p>
+          <p className="text-sm text-gray-400 mt-1">of £{weeklyTarget.toFixed(2)}</p>
         </div>
       </div>
 
@@ -88,11 +89,11 @@ function OverallScore({ data }: { data: NonNullable<ReturnType<typeof useWeekPro
 
       {allDone && scorableDays > 0 ? (
         <p className="mt-3 text-sm font-medium text-emerald-700">
-          All chores done — £{WEEKLY_TARGET.toFixed(2)} pocket money earned! 🎉
+          All chores done — £{weeklyTarget.toFixed(2)} pocket money earned! 🎉
         </p>
       ) : totalChores > 0 ? (
         <p className="mt-3 text-sm text-gray-500">
-          Complete all chores to earn the full £{WEEKLY_TARGET.toFixed(2)}
+          Complete all chores to earn the full £{weeklyTarget.toFixed(2)}
         </p>
       ) : null}
     </div>
