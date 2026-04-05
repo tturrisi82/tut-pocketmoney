@@ -35,7 +35,10 @@ export function useMarkComplete() {
         if (error) throw error
       }
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['chore-instances'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['chore-instances'] })
+      qc.invalidateQueries({ queryKey: ['chore-history'] })
+    },
   })
 }
 
@@ -54,7 +57,10 @@ export function useApproveChore(reviewerId: string) {
         .eq('id', instanceId)
       if (error) throw error
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['chore-instances'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['chore-instances'] })
+      qc.invalidateQueries({ queryKey: ['chore-history'] })
+    },
   })
 }
 
@@ -74,6 +80,9 @@ export function useRejectChore(reviewerId: string) {
         .eq('id', instanceId)
       if (error) throw error
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['chore-instances'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['chore-instances'] })
+      qc.invalidateQueries({ queryKey: ['chore-history'] })
+    },
   })
 }

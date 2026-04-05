@@ -16,6 +16,7 @@ export interface WeeklyChoreDay {
 export function useChoresForWeek(weekDays: string[]) {
   return useQuery({
     queryKey: ['chore-instances', 'weekly', weekDays[0]],
+    refetchInterval: 15_000,
     queryFn: async () => {
       if (weekDays.length === 0) return []
 

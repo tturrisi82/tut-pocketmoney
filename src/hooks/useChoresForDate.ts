@@ -9,6 +9,7 @@ import type { Chore, ChoreInstance, ChoreWithInstance } from '../types/app.types
 export function useChoresForDate(dateStr: string) {
   return useQuery({
     queryKey: ['chore-instances', 'daily', dateStr],
+    refetchInterval: 15_000,
     queryFn: async () => {
       // 1. Fetch all active daily chores
       const { data: chores, error: choresError } = await supabase
