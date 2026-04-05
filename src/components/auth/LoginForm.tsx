@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { useNavigate } from 'react-router-dom'
 import { Button } from '../ui/Button'
 import { signIn } from '../../hooks/useAuth'
 
@@ -14,6 +15,7 @@ type FormValues = z.infer<typeof schema>
 
 export function LoginForm() {
   const [error, setError] = useState<string | null>(null)
+  const navigate = useNavigate()
 
   const {
     register,
@@ -25,7 +27,7 @@ export function LoginForm() {
     setError(null)
     try {
       await signIn(values.email, values.password)
-      // Navigation handled by auth state change in App.tsx
+      navigate('/')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed')
     }
