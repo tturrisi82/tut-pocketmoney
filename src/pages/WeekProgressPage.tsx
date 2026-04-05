@@ -47,30 +47,32 @@ export function WeekProgressPage() {
   )
 }
 
+const WEEKLY_TARGET = 10 // £10
+
 function OverallScore({ data }: { data: NonNullable<ReturnType<typeof useWeekProgress>['data']> }) {
   const { totalApproved, totalChores, completedDays, scorableDays } = data
-  const pct = totalChores > 0 ? Math.round((totalApproved / totalChores) * 100) : null
+  const pct = totalChores > 0 ? totalApproved / totalChores : 0
+  const pctDisplay = Math.round(pct * 100)
+  const earned = (pct * WEEKLY_TARGET).toFixed(2)
   const allDone = scorableDays > 0 && completedDays === scorableDays
 
   return (
     <div className={`rounded-2xl p-5 ${allDone ? 'bg-emerald-50 border border-emerald-200' : 'bg-white border border-gray-200'}`}>
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm font-medium text-gray-500">Chores completed</p>
+          <p className="text-sm font-medium text-gray-500">Chores approved</p>
           <p className="text-3xl font-bold text-gray-900 mt-1">
             {totalApproved}
             <span className="text-lg font-normal text-gray-400">/{totalChores}</span>
           </p>
-          {pct !== null && (
-            <p className="text-sm text-gray-500 mt-1">{pct}% approved this week</p>
-          )}
+          <p className="text-sm text-gray-500 mt-1">{pctDisplay}% this week</p>
         </div>
         <div className="text-right">
-          <p className="text-sm font-medium text-gray-500">Days completed</p>
-          <p className="text-3xl font-bold text-gray-900 mt-1">
-            {completedDays}
-            <span className="text-lg font-normal text-gray-400">/{scorableDays}</span>
+          <p className="text-sm font-medium text-gray-500">Earned so far</p>
+          <p className={`text-3xl font-bold mt-1 ${allDone ? 'text-emerald-600' : 'text-indigo-600'}`}>
+            £{earned}
           </p>
+          <p className="text-sm text-gray-400 mt-1">of £{WEEKLY_TARGET.toFixed(2)}</p>
         </div>
       </div>
 
@@ -79,16 +81,20 @@ function OverallScore({ data }: { data: NonNullable<ReturnType<typeof useWeekPro
         <div className="mt-4 h-2.5 w-full rounded-full bg-gray-200 overflow-hidden">
           <div
             className={`h-full rounded-full transition-all ${allDone ? 'bg-emerald-500' : 'bg-indigo-500'}`}
-            style={{ width: `${pct}%` }}
+            style={{ width: `${pctDisplay}%` }}
           />
         </div>
       )}
 
-      {allDone && scorableDays > 0 && (
+      {allDone && scorableDays > 0 ? (
         <p className="mt-3 text-sm font-medium text-emerald-700">
-          All chores done — pocket money earned! 🎉
+          All chores done — £{WEEKLY_TARGET.toFixed(2)} pocket money earned! 🎉
         </p>
-      )}
+      ) : totalChores > 0 ? (
+        <p className="mt-3 text-sm text-gray-500">
+          Complete all chores to earn the full £{WEEKLY_TARGET.toFixed(2)}
+        </p>
+      ) : null}
     </div>
   )
 }
