@@ -1,14 +1,12 @@
-import { CheckCircle2, Circle, Clock, XCircle } from 'lucide-react'
+import { CheckCircle2, Circle, Clock, XCircle, Undo2 } from 'lucide-react'
 import type { ChoreWithInstance } from '../../types/app.types'
 import { StatusBadge } from './StatusBadge'
 
 interface ChoreCardProps {
   item: ChoreWithInstance
-  /** Called when child taps "Mark done" */
   onMarkDone?: (choreId: string, instanceId: string | null) => void
-  /** Whether this is the child's view (shows mark done button) */
+  onUndo?: (instanceId: string) => void
   isChild?: boolean
-  /** Whether the chore is "upcoming" (future date, no action yet) */
   upcoming?: boolean
 }
 
@@ -19,9 +17,10 @@ const statusIcons = {
   rejected: <XCircle size={20} className="text-red-500" />,
 }
 
-export function ChoreCard({ item, onMarkDone, isChild, upcoming }: ChoreCardProps) {
+export function ChoreCard({ item, onMarkDone, onUndo, isChild, upcoming }: ChoreCardProps) {
   const status = item.instance?.status ?? 'pending'
   const canMarkDone = isChild && !upcoming && (status === 'pending' || status === 'rejected')
+  const canUndo = isChild && status === 'pending_approval' && !!item.instance?.id
 
   return (
     <div className={`flex items-center gap-3 rounded-xl border p-4 transition-colors ${
@@ -64,6 +63,18 @@ export function ChoreCard({ item, onMarkDone, isChild, upcoming }: ChoreCardProp
           >
             Mark done
           </button>
+        ) : canUndo ? (
+          <div className="flex items-center gap-2">
+            <StatusBadge status={status} />
+            <button
+              onClick={() => onUndo?.(item.instance!.id)}
+              className="rounded-lg p-1.5 text-amber-600 hover:bg-amber-100 active:scale-95 transition-transform"
+              title="Undo"
+              aria-label="Undo mark done"
+            >
+              <Undo2 size={16} />
+            </button>
+          </div>
         ) : (
           <StatusBadge status={status} />
         )}

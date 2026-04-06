@@ -42,6 +42,29 @@ export function useMarkComplete() {
   })
 }
 
+/** Child undoes a mark-done (resets to pending so it can be re-submitted) */
+export function useUndoComplete() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (instanceId: string) => {
+      // Reset instance back to pending
+      const { error } = await supabase
+        .from('chore_instances')
+        .update({ status: 'pending', completed_at: null })
+        .eq('id', instanceId)
+      if (error) throw error
+
+      // Remove notification log so a fresh notification fires if re-marked
+      await supabase
+        .from('notification_log')
+        .delete()
+        .eq('chore_instance_id', instanceId)
+        .eq('notification_type', 'completion_pending')
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['chore-instances'] }),
+  })
+}
+
 /** Parent approves a chore completion */
 export function useApproveChore(reviewerId: string) {
   const qc = useQueryClient()

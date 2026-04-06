@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useChoresForDate } from '../../hooks/useChoresForDate'
-import { useMarkComplete } from '../../hooks/useChoreActions'
+import { useMarkComplete, useUndoComplete } from '../../hooks/useChoreActions'
 import { ChoreCard } from '../../components/chores/ChoreCard'
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner'
 import { EmptyState } from '../../components/ui/EmptyState'
@@ -14,6 +14,7 @@ export function ChildTodayPage() {
 
   const { data: chores, isLoading, error } = useChoresForDate(dateStr)
   const markComplete = useMarkComplete()
+  const undoComplete = useUndoComplete()
 
   const isToday = dateStr === todayStr
   const isPast = dateStr < todayStr
@@ -67,6 +68,7 @@ export function ChildTodayPage() {
                   item={item}
                   isChild={isToday || isPast}
                   onMarkDone={handleMarkDone}
+                  onUndo={(instanceId) => undoComplete.mutate(instanceId)}
                 />
               ))}
             </div>

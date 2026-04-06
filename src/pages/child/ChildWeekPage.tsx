@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useChoresForWeek } from '../../hooks/useChoresForWeek'
-import { useMarkComplete } from '../../hooks/useChoreActions'
+import { useMarkComplete, useUndoComplete } from '../../hooks/useChoreActions'
 import { ChoreCard } from '../../components/chores/ChoreCard'
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner'
 import { EmptyState } from '../../components/ui/EmptyState'
@@ -17,6 +17,7 @@ export function ChildWeekPage() {
 
   const { data: weekData, isLoading, error } = useChoresForWeek(days)
   const markComplete = useMarkComplete()
+  const undoComplete = useUndoComplete()
 
   function prevWeek() { setWeekAnchor((d) => subDays(d, 7)) }
   function nextWeek() { setWeekAnchor((d) => addDays(d, 7)) }
@@ -69,6 +70,7 @@ export function ChildWeekPage() {
               isChild
               upcoming={dateStr > today}
               onMarkDone={(choreId, instanceId) => handleMarkDone(choreId, instanceId, dateStr)}
+              onUndo={(instanceId) => undoComplete.mutate(instanceId)}
             />
           ))}
         </div>
