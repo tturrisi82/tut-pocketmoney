@@ -94,7 +94,8 @@ export function useWeekProgress(weekDays: string[]) {
       })
 
       const pastDays = days.filter((d) => d.isPast && d.total > 0)
-      const totalChores = pastDays.reduce((sum, d) => sum + d.total, 0)
+      // Denominator is the full week's chores so progress reflects the whole week
+      const totalChores = days.reduce((sum, d) => sum + d.total, 0)
       const totalApproved = pastDays.reduce((sum, d) => sum + d.approved, 0)
 
       return {
