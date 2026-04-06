@@ -54,13 +54,13 @@ export function useUndoComplete() {
         .eq('id', instanceId)
       if (error) throw error
 
-      // Remove notification log so a fresh notification fires if re-marked
-      const { error: deleteError } = await supabase
+      // Best-effort: remove notification log so a fresh notification fires if re-marked
+      // (Edge Function also handles re-notification via completed_at comparison)
+      await supabase
         .from('notification_log')
         .delete()
         .eq('chore_instance_id', instanceId)
         .eq('notification_type', 'completion_pending')
-      if (deleteError) throw deleteError
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['chore-instances'] }),
   })

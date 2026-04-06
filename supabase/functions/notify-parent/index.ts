@@ -27,15 +27,19 @@ Deno.serve(async (req) => {
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-  // Idempotency check
+  // Idempotency check: skip only if we already notified AND the completed_at
+  // hasn't changed since (i.e. this isn't a re-submission after an undo)
+  const completedAt = instance["completed_at"] as string | null;
   const { data: existing } = await supabase
     .from("notification_log")
-    .select("id")
+    .select("sent_at")
     .eq("chore_instance_id", instanceId)
     .eq("notification_type", "completion_pending")
+    .order("sent_at", { ascending: false })
+    .limit(1)
     .maybeSingle();
 
-  if (existing) {
+  if (existing && completedAt && existing.sent_at >= completedAt) {
     return new Response("Already notified", { status: 200 });
   }
 
