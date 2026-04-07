@@ -35,8 +35,12 @@ export function ParentSettingsPage() {
   }, [settings, reset])
 
   async function onSubmit(values: FormValues) {
-    await updateSettings.mutateAsync({ weekly_target: values.weekly_target })
-    reset(values) // clear dirty state
+    try {
+      await updateSettings.mutateAsync({ weekly_target: values.weekly_target })
+      reset(values)
+    } catch (err) {
+      console.error('Settings save failed:', err)
+    }
   }
 
   return (
@@ -74,6 +78,11 @@ export function ParentSettingsPage() {
 
             {updateSettings.isSuccess && !isDirty && (
               <p className="text-sm text-emerald-600 font-medium">Saved!</p>
+            )}
+            {updateSettings.isError && (
+              <p className="text-sm text-red-500">
+                Failed to save: {(updateSettings.error as Error)?.message ?? 'Unknown error'}
+              </p>
             )}
 
             <Button type="submit" loading={isSubmitting} disabled={!isDirty}>
