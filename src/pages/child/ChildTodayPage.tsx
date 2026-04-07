@@ -7,7 +7,6 @@ import { EmptyState } from '../../components/ui/EmptyState'
 import { DateNavigator } from '../../components/ui/DateNavigator'
 import { getTodayString, toDateString, formatFullDate, subDays, addDays, parseDateString } from '../../lib/dates'
 import { ListChecks } from 'lucide-react'
-import type { ChoreWithInstance } from '../../types/app.types'
 
 export function ChildTodayPage() {
   const todayStr = getTodayString()
@@ -26,9 +25,7 @@ export function ChildTodayPage() {
   }
 
   const groups = data?.groups ?? []
-  const flat = data?.flat ?? []
-  const approved = flat.filter((c) => c.instance?.status === 'approved')
-  const hasChores = flat.length > 0
+  const hasChores = (data?.flat ?? []).length > 0
 
   return (
     <div className="px-4 pt-5 pb-4 max-w-lg mx-auto space-y-5">
@@ -61,43 +58,25 @@ export function ChildTodayPage() {
         />
       )}
 
-      {!isLoading && hasChores && (
-        <>
-          {/* Pending chores grouped by category */}
-          {groups.map((group) => {
-            const pending = group.chores.filter(c => c.instance?.status !== 'approved')
-            if (pending.length === 0) return null
-            return (
-              <div key={group.category?.id ?? 'uncategorised'} className="space-y-2">
-                {group.category && (
-                  <p className="text-xs font-semibold uppercase tracking-wide text-indigo-500">
-                    {group.category.name}
-                  </p>
-                )}
-                {pending.map((item) => (
-                  <ChoreCard
-                    key={item.id}
-                    item={item}
-                    isChild={canAct}
-                    onMarkDone={handleMarkDone}
-                    onUndo={(instanceId) => undoComplete.mutate(instanceId)}
-                  />
-                ))}
-              </div>
-            )
-          })}
+      {!isLoading && hasChores && groups.map((group) => (
+        <div key={group.category?.id ?? 'uncategorised'} className="space-y-2">
+          {/* Category header */}
+          <p className="text-xs font-semibold uppercase tracking-wide text-indigo-500">
+            {group.category?.name ?? 'Other'}
+          </p>
 
-          {/* Approved chores */}
-          {approved.length > 0 && (
-            <div className="space-y-2">
-              <p className="text-xs font-medium uppercase tracking-wide text-gray-400">Done</p>
-              {approved.map((item: ChoreWithInstance) => (
-                <ChoreCard key={item.id} item={item} />
-              ))}
-            </div>
-          )}
-        </>
-      )}
+          {/* All chores in this category — pending and approved alike */}
+          {group.chores.map((item) => (
+            <ChoreCard
+              key={item.id}
+              item={item}
+              isChild={canAct}
+              onMarkDone={handleMarkDone}
+              onUndo={(instanceId) => undoComplete.mutate(instanceId)}
+            />
+          ))}
+        </div>
+      ))}
     </div>
   )
 }

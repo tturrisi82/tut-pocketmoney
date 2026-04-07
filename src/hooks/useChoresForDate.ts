@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
+import { getDayOfWeek } from '../lib/dates'
 import type { Chore, ChoreInstance, ChoreWithInstance, Category } from '../types/app.types'
 
 export interface CategoryGroup {
@@ -8,24 +9,30 @@ export interface CategoryGroup {
 }
 
 /**
- * Fetches all daily chores and their instances for a given date.
- * Returns chores grouped by category, ordered by category sort_order then chore sort_order.
+ * Fetches all chores due on a given date (daily chores + weekly chores whose
+ * day_of_week matches), with instances lazily created. Returns chores grouped
+ * by category in category sort_order, then chore sort_order.
  */
 export function useChoresForDate(dateStr: string) {
   return useQuery({
     queryKey: ['chore-instances', 'daily', dateStr],
     refetchInterval: 15_000,
     queryFn: async () => {
-      // 1. Fetch all active daily chores ordered by sort_order
-      const { data: chores, error: choresError } = await supabase
+      const dow = getDayOfWeek(dateStr)
+
+      // 1. Fetch all active chores — daily ones always show, weekly only on their day
+      const { data: allChores, error: choresError } = await supabase
         .from('chores')
         .select('*')
-        .eq('frequency', 'daily')
         .eq('is_active', true)
         .order('sort_order', { ascending: true })
       if (choresError) throw choresError
 
-      if (!chores || chores.length === 0) return { groups: [], flat: [] }
+      const chores = (allChores ?? []).filter(
+        c => c.frequency === 'daily' || (c.frequency === 'weekly' && c.day_of_week === dow)
+      )
+
+      if (chores.length === 0) return { groups: [], flat: [] }
 
       // 2. Fetch categories
       const { data: categories } = await supabase
@@ -81,7 +88,6 @@ function groupByCategory(
 ): CategoryGroup[] {
   const groups: CategoryGroup[] = []
 
-  // One group per category (in order), only if it has chores
   for (const cat of categories) {
     const catChores = chores.filter(c => c.category_id === cat.id)
     if (catChores.length > 0) {
@@ -89,7 +95,6 @@ function groupByCategory(
     }
   }
 
-  // Uncategorised last
   const uncategorised = chores.filter(c => !c.category_id || !catMap.has(c.category_id))
   if (uncategorised.length > 0) {
     groups.push({ category: null, chores: uncategorised })
@@ -98,7 +103,6 @@ function groupByCategory(
   return groups
 }
 
-// Keep flat merge helper for other consumers
 export function mergeFlat(chores: Chore[], instances: ChoreInstance[]): ChoreWithInstance[] {
   const instanceMap = new Map(instances.map((i) => [i.chore_id, i]))
   return chores.map((chore) => ({ ...chore, instance: instanceMap.get(chore.id) ?? null }))
