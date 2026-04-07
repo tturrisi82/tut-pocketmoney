@@ -8,7 +8,7 @@ import { ParentLayout } from './components/layout/ParentLayout'
 import { ChildTodayPage } from './pages/child/ChildTodayPage'
 import { ChildWeekPage } from './pages/child/ChildWeekPage'
 import { ChildHistoryPage } from './pages/child/ChildHistoryPage'
-import { ParentChoresPage } from './pages/parent/ParentChoresPage'
+import { ParentManagePage } from './pages/parent/ParentManagePage'
 import { ParentReviewPage } from './pages/parent/ParentReviewPage'
 import { ParentHistoryPage } from './pages/parent/ParentHistoryPage'
 import { ParentSettingsPage } from './pages/parent/ParentSettingsPage'
@@ -75,7 +75,7 @@ export default function App() {
         <Route index element={<Navigate to="chores" replace />} />
         <Route
           path="chores"
-          element={profile?.id ? <ParentChoresPage userId={profile.id} /> : <LoadingSpinner />}
+          element={profile?.id ? <ParentManagePage userId={profile.id} /> : <LoadingSpinner />}
         />
         <Route
           path="review"

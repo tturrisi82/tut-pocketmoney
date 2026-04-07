@@ -2,7 +2,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Button } from '../ui/Button'
-import type { Chore } from '../../types/app.types'
+import type { Chore, Category } from '../../types/app.types'
 
 const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 
@@ -11,6 +11,7 @@ const schema = z.object({
   description: z.string().max(300).optional(),
   frequency: z.enum(['daily', 'weekly']),
   day_of_week: z.number().min(0).max(6).nullable().optional(),
+  category_id: z.string().nullable().optional(),
 }).refine(
   (data) => data.frequency === 'daily' || data.day_of_week != null,
   { message: 'Day of week is required for weekly chores', path: ['day_of_week'] }
@@ -20,11 +21,12 @@ type FormValues = z.infer<typeof schema>
 
 interface ChoreFormProps {
   defaultValues?: Partial<Chore>
+  categories?: Category[]
   onSubmit: (values: FormValues) => Promise<void>
   onCancel: () => void
 }
 
-export function ChoreForm({ defaultValues, onSubmit, onCancel }: ChoreFormProps) {
+export function ChoreForm({ defaultValues, categories = [], onSubmit, onCancel }: ChoreFormProps) {
   const {
     register,
     handleSubmit,
@@ -38,6 +40,7 @@ export function ChoreForm({ defaultValues, onSubmit, onCancel }: ChoreFormProps)
       description: defaultValues?.description ?? '',
       frequency: defaultValues?.frequency ?? 'daily',
       day_of_week: defaultValues?.day_of_week ?? null,
+      category_id: defaultValues?.category_id ?? null,
     },
   })
 
@@ -67,6 +70,22 @@ export function ChoreForm({ defaultValues, onSubmit, onCancel }: ChoreFormProps)
           className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
         />
       </label>
+
+      {/* Category */}
+      {categories.length > 0 && (
+        <label className="block">
+          <span className="text-sm font-medium text-gray-700">Category</span>
+          <select
+            {...register('category_id')}
+            className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          >
+            <option value="">Uncategorised</option>
+            {categories.map(cat => (
+              <option key={cat.id} value={cat.id}>{cat.name}</option>
+            ))}
+          </select>
+        </label>
+      )}
 
       {/* Frequency */}
       <fieldset>

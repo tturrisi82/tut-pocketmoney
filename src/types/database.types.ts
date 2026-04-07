@@ -36,6 +36,8 @@ export type Database = {
           frequency: 'daily' | 'weekly'
           day_of_week: number | null
           is_active: boolean
+          category_id: string | null
+          sort_order: number
           created_by: string
           created_at: string
           updated_at: string
@@ -47,6 +49,8 @@ export type Database = {
           frequency: 'daily' | 'weekly'
           day_of_week?: number | null
           is_active?: boolean
+          category_id?: string | null
+          sort_order?: number
           created_by: string
           created_at?: string
           updated_at?: string
@@ -58,6 +62,8 @@ export type Database = {
           frequency?: 'daily' | 'weekly'
           day_of_week?: number | null
           is_active?: boolean
+          category_id?: string | null
+          sort_order?: number
           created_by?: string
           created_at?: string
           updated_at?: string
@@ -122,6 +128,30 @@ export type Database = {
             referencedColumns: ['id']
           }
         ]
+      }
+      categories: {
+        Row: {
+          id: string
+          name: string
+          sort_order: number
+          created_by: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          sort_order?: number
+          created_by: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          sort_order?: number
+          created_by?: string
+          created_at?: string
+        }
+        Relationships: []
       }
       app_settings: {
         Row: {

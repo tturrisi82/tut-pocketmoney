@@ -1,28 +1,39 @@
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
-import type { Chore, ChoreInstance, ChoreWithInstance } from '../types/app.types'
+import type { Chore, ChoreInstance, ChoreWithInstance, Category } from '../types/app.types'
+
+export interface CategoryGroup {
+  category: Category | null  // null = uncategorised
+  chores: ChoreWithInstance[]
+}
 
 /**
  * Fetches all daily chores and their instances for a given date.
- * Lazily upserts instances for any chore that doesn't have one yet.
+ * Returns chores grouped by category, ordered by category sort_order then chore sort_order.
  */
 export function useChoresForDate(dateStr: string) {
   return useQuery({
     queryKey: ['chore-instances', 'daily', dateStr],
     refetchInterval: 15_000,
     queryFn: async () => {
-      // 1. Fetch all active daily chores
+      // 1. Fetch all active daily chores ordered by sort_order
       const { data: chores, error: choresError } = await supabase
         .from('chores')
         .select('*')
         .eq('frequency', 'daily')
         .eq('is_active', true)
-        .order('created_at', { ascending: true })
+        .order('sort_order', { ascending: true })
       if (choresError) throw choresError
 
-      if (!chores || chores.length === 0) return []
+      if (!chores || chores.length === 0) return { groups: [], flat: [] }
 
-      // 2. Fetch existing instances for this date
+      // 2. Fetch categories
+      const { data: categories } = await supabase
+        .from('categories')
+        .select('*')
+        .order('sort_order', { ascending: true })
+
+      // 3. Fetch existing instances for this date
       const { data: instances, error: instancesError } = await supabase
         .from('chore_instances')
         .select('*')
@@ -30,39 +41,65 @@ export function useChoresForDate(dateStr: string) {
         .eq('due_date', dateStr)
       if (instancesError) throw instancesError
 
-      // 3. Upsert missing instances (ignore duplicates)
+      // 4. Upsert missing instances
       const existingIds = new Set(instances?.map((i) => i.chore_id) ?? [])
       const missing = chores.filter((c) => !existingIds.has(c.id))
+      let allInstances = instances ?? []
+
       if (missing.length > 0) {
-        const { error: upsertError } = await supabase.from('chore_instances').upsert(
+        await supabase.from('chore_instances').upsert(
           missing.map((c) => ({ chore_id: c.id, due_date: dateStr, status: 'pending' as const })),
           { onConflict: 'chore_id,due_date', ignoreDuplicates: true }
         )
-        if (upsertError) throw upsertError
-
-        // Re-fetch instances after upsert
-        const { data: refreshed, error: refreshError } = await supabase
+        const { data: refreshed } = await supabase
           .from('chore_instances')
           .select('*')
           .in('chore_id', chores.map((c) => c.id))
           .eq('due_date', dateStr)
-        if (refreshError) throw refreshError
-
-        return mergeChoresAndInstances(chores, refreshed ?? [])
+        allInstances = refreshed ?? []
       }
 
-      return mergeChoresAndInstances(chores, instances ?? [])
+      const instanceMap = new Map(allInstances.map((i) => [i.chore_id, i]))
+      const merged: ChoreWithInstance[] = chores.map((chore) => ({
+        ...chore,
+        instance: instanceMap.get(chore.id) ?? null,
+      }))
+
+      // 5. Group by category
+      const catMap = new Map((categories ?? []).map((c) => [c.id, c]))
+      const groups = groupByCategory(merged, categories ?? [], catMap)
+
+      return { groups, flat: merged }
     },
   })
 }
 
-function mergeChoresAndInstances(
-  chores: Chore[],
-  instances: ChoreInstance[]
-): ChoreWithInstance[] {
+function groupByCategory(
+  chores: ChoreWithInstance[],
+  categories: Category[],
+  catMap: Map<string, Category>
+): CategoryGroup[] {
+  const groups: CategoryGroup[] = []
+
+  // One group per category (in order), only if it has chores
+  for (const cat of categories) {
+    const catChores = chores.filter(c => c.category_id === cat.id)
+    if (catChores.length > 0) {
+      groups.push({ category: cat, chores: catChores })
+    }
+  }
+
+  // Uncategorised last
+  const uncategorised = chores.filter(c => !c.category_id || !catMap.has(c.category_id))
+  if (uncategorised.length > 0) {
+    groups.push({ category: null, chores: uncategorised })
+  }
+
+  return groups
+}
+
+// Keep flat merge helper for other consumers
+export function mergeFlat(chores: Chore[], instances: ChoreInstance[]): ChoreWithInstance[] {
   const instanceMap = new Map(instances.map((i) => [i.chore_id, i]))
-  return chores.map((chore) => ({
-    ...chore,
-    instance: instanceMap.get(chore.id) ?? null,
-  }))
+  return chores.map((chore) => ({ ...chore, instance: instanceMap.get(chore.id) ?? null }))
 }
